@@ -48,16 +48,16 @@ val info :
 val ( & ) : ('a -> 'b) -> 'a -> 'b
 
 val flag : info -> bool t
-val flag_all : info -> bool list t
+val flag_all : info -> (int * bool) list t
 val vflag : 'a -> ('a * info) list -> 'a t
-val vflag_all : 'a list -> ('a * info) list -> 'a list t
+val vflag_all : 'a list -> ('a * info) list -> (int * 'a) list t
 val opt : ?vopt:'a -> 'a conv -> 'a -> info -> 'a t
-val opt_all : ?vopt:'a -> 'a conv -> 'a list -> info -> 'a list t
+val opt_all : ?vopt:'a -> 'a conv -> 'a list -> info -> (int * 'a) list t
 
 val pos : ?rev:bool -> int -> 'a conv -> 'a -> info -> 'a t
-val pos_all : 'a conv -> 'a list -> info -> 'a list t
-val pos_left : ?rev:bool -> int -> 'a conv -> 'a list -> info -> 'a list t
-val pos_right : ?rev:bool -> int -> 'a conv -> 'a list -> info -> 'a list t
+val pos_all : 'a conv -> 'a list -> info -> (int * 'a) list t
+val pos_left : ?rev:bool -> int -> 'a conv -> 'a list -> info -> (int * 'a) list t
+val pos_right : ?rev:bool -> int -> 'a conv -> 'a list -> info -> (int * 'a) list t
 
 (** {1 As terms} *)
 

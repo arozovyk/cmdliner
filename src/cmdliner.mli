@@ -705,7 +705,7 @@ module Arg : sig
       the names specified by [i]. The argument holds [true] if the
       flag is present on the command line and [false] otherwise. *)
 
-  val flag_all : info -> bool list t
+  val flag_all : info -> (int * bool) list t
   (** [flag_all] is like {!flag} except the flag may appear more than
       once. The argument holds a list that contains one [true] value per
       occurrence of the flag. It holds the empty list if the flag
@@ -722,7 +722,7 @@ module Arg : sig
       {b Note.} Environment variable lookup is unsupported for
       for these arguments. *)
 
-  val vflag_all : 'a list -> ('a * info) list -> 'a list t
+  val vflag_all : 'a list -> ('a * info) list -> (int * 'a) list t
   (** [vflag_all v l] is like {!vflag} except the flag may appear more
       than once. The argument holds the list [v] if the flag is absent
       from the command line. Otherwise it holds a list that contains one
@@ -742,7 +742,7 @@ module Arg : sig
       If [vopt] is provided the value of the optional argument is itself
       optional, taking the value [vopt] if unspecified on the command line. *)
 
-  val opt_all : ?vopt:'a -> 'a conv -> 'a list -> info -> 'a list t
+  val opt_all : ?vopt:'a -> 'a conv -> 'a list -> info -> (int * 'a) list t
   (** [opt_all vopt c v i] is like {!opt} except the optional argument may
       appear more than once. The argument holds a list that contains one value
       per occurrence of the flag in the order found on the command line.
@@ -771,13 +771,13 @@ module Arg : sig
       position is [max-n] where [max] is the position of
       the last positional argument present on the command line. *)
 
-  val pos_all : 'a conv -> 'a list -> info -> 'a list t
+  val pos_all : 'a conv -> 'a list -> info -> (int * 'a) list t
   (** [pos_all c v i] is an ['a list] argument that holds
       all the positional arguments of the command line as converted
       by [c] or [v] if there are none. *)
 
   val pos_left :
-    ?rev:bool -> int -> 'a conv -> 'a list -> info -> 'a list t
+    ?rev:bool -> int -> 'a conv -> 'a list -> info -> (int * 'a) list t
   (** [pos_left rev n c v i] is an ['a list] argument that holds
       all the positional arguments as converted by [c] found on the left
       of the [n]th positional argument or [v] if there are none.
@@ -787,7 +787,7 @@ module Arg : sig
       the last positional argument present on the command line. *)
 
   val pos_right :
-    ?rev:bool -> int -> 'a conv -> 'a list -> info -> 'a list t
+    ?rev:bool -> int -> 'a conv -> 'a list -> info -> (int * 'a) list t
   (** [pos_right] is like {!pos_left} except it holds all the positional
       arguments found on the right of the specified positional argument. *)
 

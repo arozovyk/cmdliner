@@ -163,7 +163,7 @@ let vflag_all v l =
             aux (List.rev_append (List.rev_map fval l) acc) rest
         end
     | [] ->
-        if acc = [] then v else List.rev_map snd (List.sort rev_compare acc)
+        if acc = [] then (List.mapi (fun i v -> (i,v)) v) else List.rev (List.sort rev_compare acc)
     in
     try Ok (aux [] l) with Failure e -> err e
   in
