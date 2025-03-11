@@ -71,7 +71,7 @@ let ( & ) f x = f x
 let err e = Error (`Parse e)
 
 let parse_to_list parser s = match parser s with
-| `Ok v -> `Ok [v]
+| `Ok v -> `Ok [0,v]
 | `Error _ as e -> e
 
 let report_deprecated_env ei e = match Cmdliner_info.Env.info_deprecated e with
@@ -116,11 +116,11 @@ let flag_all a =
       try_env ei a (parse_to_list Cmdliner_base.env_bool_parse) ~absent:[]
   | l ->
       try
-        let truth (_, f, v) = match v with
-        | None -> true
+        let truth (k, f, v) = match v with
+        | None -> (k, true)
         | Some v -> failwith (Cmdliner_msg.err_flag_value f v)
         in
-        Ok (List.rev_map truth l)
+        Ok (List.rev_map (truth ) l)
       with Failure e -> err e
   in
   arg_to_args a Cmdliner_base.no_complete, convert
@@ -213,7 +213,7 @@ let opt_all ?vopt {parse; print; complete} v a =
   in
   let a = Cmdliner_info.Arg.make_opt_all ~absent ~kind a in
   let convert ei cl = match Cmdliner_cline.opt_arg cl a with
-  | [] -> try_env ei a (parse_to_list parse) ~absent:v
+  | [] -> try_env ei a (parse_to_list parse) ~absent:(List.mapi (fun i v -> (i,v)) v)
   | l ->
       let parse (k, f, v) = match v with
       | Some v -> (k, parse_opt_value parse f v)
@@ -221,7 +221,7 @@ let opt_all ?vopt {parse; print; complete} v a =
       | None -> failwith (Cmdliner_msg.err_opt_value_missing f)
       | Some dv -> (k, dv)
       in
-      try Ok (List.rev_map snd
+      try Ok (List.rev
                 (List.sort rev_compare (List.rev_map parse l))) with
       | Failure e -> err e
   in
@@ -253,9 +253,9 @@ let pos_list pos {parse; complete; _} v a =
   if Cmdliner_info.Arg.is_opt a then invalid_arg err_not_pos else
   let a = Cmdliner_info.Arg.make_pos ~pos a in
   let convert ei cl = match Cmdliner_cline.pos_arg cl a with
-  | [] -> try_env ei a (parse_to_list parse) ~absent:v
+  | [] -> try_env ei a (parse_to_list parse) ~absent:(List.mapi (fun i v -> (i,v)) v)
   | l ->
-      try Ok (List.rev (List.rev_map (parse_pos_value parse a) l)) with
+      try Ok (List.rev (List.rev (List.mapi (fun i v -> i, parse_pos_value parse a v) l))) with
       | Failure e -> err e
   in
   arg_to_args a complete, convert
