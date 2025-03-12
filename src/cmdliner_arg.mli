@@ -48,10 +48,11 @@ val vflag_all : 'a list -> ('a * info) list -> 'a list t
 val opt : ?vopt:'a -> 'a converter -> 'a -> info -> 'a t
 val opt_all : ?vopt:'a -> 'a converter -> 'a list -> info -> 'a list t
 
-val pos : ?rev:bool -> int -> 'a converter -> 'a -> info -> 'a t
-val pos_all : 'a converter -> 'a list -> info -> 'a list t
-val pos_left : ?rev:bool -> int -> 'a converter -> 'a list -> info -> 'a list t
-val pos_right : ?rev:bool -> int -> 'a converter -> 'a list -> info -> 'a list t
+val pos : ?rev:bool -> int -> 'a conv -> 'a -> info -> 'a t
+val pos_all : 'a conv -> 'a list -> info -> 'a list t
+val pos_left : ?rev:bool -> int -> 'a conv -> 'a list -> info -> 'a list t
+val pos_right : ?rev:bool -> int -> 'a conv -> 'a list -> info -> 'a list t
+val opt_vflag_all : ?vopt:'a -> 'a list -> ('a option * 'a conv option * info) list -> 'a list t
 
 (** {1 As terms} *)
 
