@@ -994,6 +994,11 @@ module Arg : sig
       per occurrence of the flag in the order found on the command line.
       It holds the list [v] if the flag is absent from the command line. *)
 
+
+  type 'a econv = { conv : 'b. 'b conv * ('b -> 'a) }
+  val opt_vflag_all : ('a * 'b option) list ->
+  ('a * ('b option * 'a econv) option * info) list -> ('a * 'b option) list t
+
   (** {1:posargs Positional arguments}
 
       The information of a positional argument must have no name
