@@ -226,23 +226,26 @@ let opt_all ?vopt (parse, print) v a =
   arg_to_args a, convert
 
 
+type  ('a,'b) opt_or_vflag = Vflag of ('a ) | Opt of ('b conv )
+type  ('a,'b) res = Vflag_res of ('a ) | Opt_res of ('b )
 
-let opt_vflag_all ?vopt v_vflag v_opt (l:('a option * 'b conv option * info) list) =  
+
+let opt_vflag_all ?vopt v_vflag v_opt (l:(('a,'b) opt_or_vflag * info) list) : (('a,'b) res) list  t=  
   let convert ei cl =
-    let rec aux (acc_result : ('a list, [> `Parse of string ]) result)  = function
-    | (Some fv, None, a) :: rest ->
-        Result.fold acc_result ~ok:(fun acc ->
+    let rec aux (acc_result : ((('a,'b) res) list, [> `Parse of string ]) result)  = function
+    | ( Vflag fv, a) :: rest ->
+        Result.fold acc_result ~ok:(fun (acc : (('a,'b) res) list) ->
             begin match Cmdliner_cline.opt_arg cl a with
             | [] -> aux (Ok acc) rest
             | l ->
                 let fval (_, f, v) = match v with
-                | None -> (fv)
+                | None ->  Vflag_res fv
                 | Some v -> failwith (Cmdliner_msg.err_flag_value f v)
                 in
                 (aux (Ok (List.rev_append (List.rev_map fval l) acc) )rest)
             end
           ) ~error:(fun e -> aux (Error e) rest) 
-    | (None, Some (parse, print), a) :: rest ->
+    | (Opt (parse, print), a) :: rest ->
         if Cmdliner_info.Arg.is_pos a then invalid_arg err_not_opt else
         let absent = match Cmdliner_info.Arg.absent a with
         | Cmdliner_info.Arg.Doc d as a when d <> "" -> a
@@ -254,20 +257,22 @@ let opt_vflag_all ?vopt v_vflag v_opt (l:('a option * 'b conv option * info) lis
         in
         let a = Cmdliner_info.Arg.make_opt_all ~absent ~kind a in
         let opt_result = match Cmdliner_cline.opt_arg cl a with
-        | [] -> try_env ei a (parse_to_list parse) ~absent:v_opt
+        | [] -> 
+          let thing = 
+             (try_env ei a (parse_to_list parse) ~absent:v_opt)  |> 
+              Result.map (fun b -> List.map (fun b'-> Opt_res b') b)   in thing 
         | l ->
             let parse (_,f, v) = match v with
-            | Some v -> ( parse_opt_value parse f v)
+            | Some v ->  Opt_res ( parse_opt_value parse f v)
             | None -> match vopt with
             | None -> failwith (Cmdliner_msg.err_opt_value_missing f)
-            | Some dv -> (dv)
+            | Some dv -> Opt_res (dv)
             in
             try Ok (List.rev  
                       (List.sort rev_compare (List.rev_map parse l))) with
             | Failure e -> err e in
         aux opt_result rest  
-    | (_,_,a)::_ -> failwith (Cmdliner_msg.err_arg_missing a ) (*TODO: what error is this ?*)
-    | [] ->       
+     | [] ->       
         Result.map (fun acc ->
             if acc = [] then v_vflag else List.rev  (List.sort rev_compare acc)) acc_result
     in
@@ -278,9 +283,9 @@ let opt_vflag_all ?vopt v_vflag v_opt (l:('a option * 'b conv option * info) lis
     Cmdliner_info.Arg.make_all_opts a
   in
   (* TODO: do it in aux to optimize? *)
-  let vflags = List.filter_map (function (Some v, None, a) -> Some (v,a) | _ -> None) l in 
+  let vflags = List.filter_map (function (Vflag v, a) -> Some (v,a) | _ -> None) l in 
   let opts_args = List.fold_left
-      (fun acc -> function (None, Some _, a) ->
+      (fun acc -> function (Opt _, a) ->
           Cmdliner_info.Arg.Set.union (arg_to_args a  ) acc
                          | _ ->acc) Cmdliner_info.Arg.Set.empty l in 
   let vflag_opt_args =  Cmdliner_info.Arg.Set.union opts_args  
