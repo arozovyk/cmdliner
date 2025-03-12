@@ -227,7 +227,7 @@ let opt_all ?vopt (parse, print) v a =
 
 
 
-let opt_vflag_all ?vopt v (l:('a option * 'a conv option * info) list) =  
+let opt_vflag_all ?vopt v_vflag v_opt (l:('a option * 'b conv option * info) list) =  
   let convert ei cl =
     let rec aux (acc_result : ('a list, [> `Parse of string ]) result)  = function
     | (Some fv, None, a) :: rest ->
@@ -236,7 +236,7 @@ let opt_vflag_all ?vopt v (l:('a option * 'a conv option * info) list) =
             | [] -> aux (Ok acc) rest
             | l ->
                 let fval (_, f, v) = match v with
-                | None -> fv
+                | None -> (fv)
                 | Some v -> failwith (Cmdliner_msg.err_flag_value f v)
                 in
                 (aux (Ok (List.rev_append (List.rev_map fval l) acc) )rest)
@@ -254,7 +254,7 @@ let opt_vflag_all ?vopt v (l:('a option * 'a conv option * info) list) =
         in
         let a = Cmdliner_info.Arg.make_opt_all ~absent ~kind a in
         let opt_result = match Cmdliner_cline.opt_arg cl a with
-        | [] -> try_env ei a (parse_to_list parse) ~absent:v
+        | [] -> try_env ei a (parse_to_list parse) ~absent:v_opt
         | l ->
             let parse (_,f, v) = match v with
             | Some v -> ( parse_opt_value parse f v)
@@ -269,7 +269,7 @@ let opt_vflag_all ?vopt v (l:('a option * 'a conv option * info) list) =
     | (_,_,a)::_ -> failwith (Cmdliner_msg.err_arg_missing a ) (*TODO: what error is this ?*)
     | [] ->       
         Result.map (fun acc ->
-            if acc = [] then v else List.rev  (List.sort rev_compare acc)) acc_result
+            if acc = [] then v_vflag else List.rev  (List.sort rev_compare acc)) acc_result
     in
     try (aux (Ok[]) l) with Failure e -> err e
   in
