@@ -242,7 +242,7 @@ let opt_vflag_all ?vopt v_vflag v_opt (l:('a option * 'b conv option * info) lis
                 (aux (Ok (List.rev_append (List.rev_map fval l) acc) )rest)
             end
           ) ~error:(fun e -> aux (Error e) rest) 
-    | (None, Some {parse; print; complete}, a) :: rest ->
+    | (None, Some (parse, print), a) :: rest ->
         if Cmdliner_info.Arg.is_pos a then invalid_arg err_not_opt else
         let absent = match Cmdliner_info.Arg.absent a with
         | Cmdliner_info.Arg.Doc d as a when d <> "" -> a
@@ -280,11 +280,11 @@ let opt_vflag_all ?vopt v_vflag v_opt (l:('a option * 'b conv option * info) lis
   (* TODO: do it in aux to optimize? *)
   let vflags = List.filter_map (function (Some v, None, a) -> Some (v,a) | _ -> None) l in 
   let opts_args = List.fold_left
-      (fun acc -> function (None, Some {complete; _}, a) ->
-          Cmdliner_info.Arg.Set.union (arg_to_args a complete) acc
+      (fun acc -> function (None, Some _, a) ->
+          Cmdliner_info.Arg.Set.union (arg_to_args a  ) acc
                          | _ ->acc) Cmdliner_info.Arg.Set.empty l in 
   let vflag_opt_args =  Cmdliner_info.Arg.Set.union opts_args  
-  (list_to_args flag vflags Cmdliner_base.no_complete) in 
+  (list_to_args flag vflags  ) in 
   vflag_opt_args, convert  
 
 (* Positional arguments *)
