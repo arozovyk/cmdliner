@@ -9,7 +9,7 @@ type 'a parser = string -> [ `Ok of 'a | `Error of string ]
 type 'a printer = Format.formatter -> 'a -> unit
 type 'a conv = 'a parser * 'a printer
 type 'a converter = 'a conv
-type  ('a,'b) opt_or_vflag = Vflag of ('a ) | Opt of ('b conv )
+type  ('a,'b) opt_or_vflag = Vflag of ('a ) | Opt of ('b )
 type  ('a,'b) res = Vflag_res of ('a ) | Opt_res of ('b )
 
 val conv :
@@ -56,7 +56,8 @@ val pos_left : ?rev:bool -> int -> 'a conv -> 'a list -> info -> 'a list t
 val pos_right : ?rev:bool -> int -> 'a conv -> 'a list -> info -> 'a list t
 val opt_vflag_all : ?vopt:'b ->
   ('a, 'b) res list ->
-  'b list -> (('a, 'b) opt_or_vflag * info) list -> ('a, 'b) res list t
+  'b list ->
+  (('a, 'b converter) opt_or_vflag * info) list -> ('a, 'b) res list t
 (** {1 As terms} *)
 
 val value : 'a t -> 'a Cmdliner_term.t

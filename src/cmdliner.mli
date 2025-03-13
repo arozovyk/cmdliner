@@ -837,7 +837,7 @@ module Arg : sig
       This type will become abstract in the next major version of cmdliner. *)
   [@@@alert "+deprecated"] (* Need to be able to mention them ! *)
 
-  type  ('a,'b) opt_or_vflag = Vflag of ('a ) | Opt of ('b conv )
+  type  ('a,'b) opt_or_vflag = Vflag of ('a ) | Opt of ('b )
   type  ('a,'b) res = Vflag_res of ('a ) | Opt_res of ('b )
 
 
@@ -998,8 +998,10 @@ module Arg : sig
       per occurrence of the flag in the order found on the command line.
       It holds the list [v] if the flag is absent from the command line. *)
 
-  val opt_vflag_all : ?vopt:'b -> ('a, 'b) res list -> 
-    'b list -> (('a, 'b) opt_or_vflag * info) list -> ('a, 'b) res list t
+  val opt_vflag_all : ?vopt:'b ->
+  ('a, 'b) res list ->
+  'b list ->
+  (('a, 'b conv) opt_or_vflag * info) list -> ('a, 'b) res list t
 
 
   (** {1:posargs Positional arguments}

@@ -226,13 +226,13 @@ let opt_all ?vopt (parse, print) v a =
   arg_to_args a, convert
 
 
-type  ('a,'b) opt_or_vflag = Vflag of ('a ) | Opt of ('b conv )
+type  ('a,'b) opt_or_vflag = Vflag of ('a ) | Opt of ('b)
 type  ('a,'b) res = Vflag_res of ('a ) | Opt_res of (* TODO: ?vopt * 'b *) ('b ) 
 
  
-let opt_vflag_all ?vopt v_vflag v_opt (l:(('a,'b) opt_or_vflag * info) list) : (('a,'b) res) list  t=  
+let opt_vflag_all ?vopt v_vflag v_opt (l:(('a,'b conv) opt_or_vflag * info) list) : (('a,'b) res) list  t=  
   let convert ei cl =
-    let rec aux (acc_result : ((('a,'b) res) list, [> `Parse of string ]) result)  = function
+    let rec aux (acc_result )  = function
     | ( Vflag fv, a) :: rest ->
         Result.fold acc_result ~ok:(fun (acc : (('a,'b) res) list) ->
             begin match Cmdliner_cline.opt_arg cl a with
@@ -245,7 +245,7 @@ let opt_vflag_all ?vopt v_vflag v_opt (l:(('a,'b) opt_or_vflag * info) list) : (
                 (aux (Ok (List.rev_append (List.rev_map fval l) acc) )rest)
             end
           ) ~error:(fun e -> aux (Error e) rest) 
-    | (Opt (parse, print), a) :: rest ->
+    | (Opt ((parse, print) : 'b conv), a) :: rest ->
         if Cmdliner_info.Arg.is_pos a then invalid_arg err_not_opt else
         let absent = match Cmdliner_info.Arg.absent a with
         | Cmdliner_info.Arg.Doc d as a when d <> "" -> a
@@ -260,7 +260,7 @@ let opt_vflag_all ?vopt v_vflag v_opt (l:(('a,'b) opt_or_vflag * info) list) : (
         | [] -> 
           let thing = 
              (try_env ei a (parse_to_list parse) ~absent:v_opt)  |> 
-              Result.map (fun b -> List.map (fun b'-> Opt_res b') b)   in thing 
+              Result.map (fun b -> List.map (fun b'-> Opt_res b') b) in thing 
         | l ->
             let parse (_,f, v) = match v with
             | Some v ->  Opt_res ( parse_opt_value parse f v)
