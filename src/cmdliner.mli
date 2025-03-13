@@ -999,6 +999,9 @@ type  ('a,'b) opt_or_vflag = Vflag_res of 'a | Opt_res of 'b
 
   val opt_vflag_all : ?vopt:'b -> ('a, 'b) opt_or_vflag list -> 'b list ->
     (('a, 'b conv) opt_or_vflag_arg * info) list -> ('a, 'b) opt_or_vflag list t
+  val opt_vflag_all2 :?vopt:'a ->
+  'a list ->
+  'a list -> ('a * (('a -> 'a) * 'a conv) option * info) list -> 'a list t
 
   (** {1:posargs Positional arguments}
 

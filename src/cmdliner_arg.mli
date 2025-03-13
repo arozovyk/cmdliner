@@ -49,6 +49,10 @@ val vflag : 'a -> ('a * info) list -> 'a t
 val vflag_all : 'a list -> ('a * info) list -> 'a list t
 val opt_vflag_all : ?vopt:'b -> ('a, 'b) opt_or_vflag list -> 'b list ->
   (('a, 'b converter) opt_or_vflag_arg * info) list -> ('a, 'b) opt_or_vflag list t
+
+val opt_vflag_all2 :?vopt:'a ->
+  'a list ->
+  'a list -> ('a * (('a -> 'a) * 'a converter) option * info) list -> 'a list t
 val opt : ?vopt:'a -> 'a converter -> 'a -> info -> 'a t
 val opt_all : ?vopt:'a -> 'a converter -> 'a list -> info -> 'a list t
 
