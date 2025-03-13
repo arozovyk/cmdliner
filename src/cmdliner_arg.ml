@@ -227,9 +227,9 @@ let opt_all ?vopt (parse, print) v a =
 
 
 type  ('a,'b) opt_or_vflag = Vflag of ('a ) | Opt of ('b conv )
-type  ('a,'b) res = Vflag_res of ('a ) | Opt_res of ('b )
+type  ('a,'b) res = Vflag_res of ('a ) | Opt_res of (* TODO: ?vopt * 'b *) ('b ) 
 
-
+ 
 let opt_vflag_all ?vopt v_vflag v_opt (l:(('a,'b) opt_or_vflag * info) list) : (('a,'b) res) list  t=  
   let convert ei cl =
     let rec aux (acc_result : ((('a,'b) res) list, [> `Parse of string ]) result)  = function
