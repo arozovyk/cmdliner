@@ -227,10 +227,10 @@ let opt_all ?vopt (parse, print) v a =
 
 
 
-  let opt_vflag_all2 ?vopt v_vflag v_opt (l : (('a * (('b->'a) * 'b conv) option * info) list) ) : 'a list t =
+  let opt_vflag_all2 ?(vopt : 'b option) (v_vflag:'a list) (v_opt:'b list) (l : (('a * (('b -> 'a) * 'b conv) option * info) list) ) : 'a list t =
   let convert ei cl =
     let rec aux (acc_result )  = function
-    | (  fv,None, a) :: rest ->
+    | (fv, None, a) :: rest ->
         Result.fold acc_result ~ok:(fun (acc  ) ->
             begin match Cmdliner_cline.opt_arg cl a with
             | [] -> aux (Ok acc) rest
@@ -265,7 +265,7 @@ let opt_all ?vopt (parse, print) v a =
               v_conv parsed_opt_v
             | None -> match vopt with
             | None -> failwith (Cmdliner_msg.err_opt_value_missing f)
-            | Some dv ->       dv
+            | Some dv ->     v_conv  dv
             in
             try Ok (List.rev  
                       (List.sort rev_compare (List.rev_map parse l))) with
