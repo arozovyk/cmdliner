@@ -226,15 +226,14 @@ let opt_all ?vopt (parse, print) v a =
   arg_to_args a, convert
 
 
-type  ('a,'b) opt_or_vflag = Vflag of ('a ) | Opt of ('b)
-type  ('a,'b) res = Vflag_res of ('a ) | Opt_res of (* TODO: ?vopt * 'b *) ('b ) 
+type  ('a,'b) opt_or_vflag_arg = Vflag_arg of 'a | Opt_arg of 'b 
+type  ('a,'b) opt_or_vflag = Vflag_res of 'a | Opt_res of 'b  
 
- 
-let opt_vflag_all ?vopt v_vflag v_opt (l:(('a,'b conv) opt_or_vflag * info) list) : (('a,'b) res) list  t=  
+let opt_vflag_all ?vopt v_vflag v_opt l =
   let convert ei cl =
     let rec aux (acc_result )  = function
-    | ( Vflag fv, a) :: rest ->
-        Result.fold acc_result ~ok:(fun (acc : (('a,'b) res) list) ->
+    | ( Vflag_arg fv, a) :: rest ->
+        Result.fold acc_result ~ok:(fun (acc : (('a,'b) opt_or_vflag) list) ->
             begin match Cmdliner_cline.opt_arg cl a with
             | [] -> aux (Ok acc) rest
             | l ->
@@ -245,7 +244,7 @@ let opt_vflag_all ?vopt v_vflag v_opt (l:(('a,'b conv) opt_or_vflag * info) list
                 (aux (Ok (List.rev_append (List.rev_map fval l) acc) )rest)
             end
           ) ~error:(fun e -> aux (Error e) rest) 
-    | (Opt ((parse, print) : 'b conv), a) :: rest ->
+    | (Opt_arg ((parse, print) : 'b conv), a) :: rest ->
         if Cmdliner_info.Arg.is_pos a then invalid_arg err_not_opt else
         let absent = match Cmdliner_info.Arg.absent a with
         | Cmdliner_info.Arg.Doc d as a when d <> "" -> a
@@ -257,10 +256,8 @@ let opt_vflag_all ?vopt v_vflag v_opt (l:(('a,'b conv) opt_or_vflag * info) list
         in
         let a = Cmdliner_info.Arg.make_opt_all ~absent ~kind a in
         let opt_result = match Cmdliner_cline.opt_arg cl a with
-        | [] -> 
-          let thing = 
-             (try_env ei a (parse_to_list parse) ~absent:v_opt)  |> 
-              Result.map (fun b -> List.map (fun b'-> Opt_res b') b) in thing 
+        | [] -> (try_env ei a (parse_to_list parse) ~absent:v_opt)|> 
+                Result.map (fun b -> List.map (fun b'-> Opt_res b') b)  
         | l ->
             let parse (_,f, v) = match v with
             | Some v ->  Opt_res ( parse_opt_value parse f v)
@@ -272,7 +269,7 @@ let opt_vflag_all ?vopt v_vflag v_opt (l:(('a,'b conv) opt_or_vflag * info) list
                       (List.sort rev_compare (List.rev_map parse l))) with
             | Failure e -> err e in
         aux opt_result rest  
-     | [] ->       
+    | [] ->       
         Result.map (fun acc ->
             if acc = [] then v_vflag else List.rev  (List.sort rev_compare acc)) acc_result
     in
@@ -283,13 +280,13 @@ let opt_vflag_all ?vopt v_vflag v_opt (l:(('a,'b conv) opt_or_vflag * info) list
     Cmdliner_info.Arg.make_all_opts a
   in
   (* TODO: do it in aux to optimize? *)
-  let vflags = List.filter_map (function (Vflag v, a) -> Some (v,a) | _ -> None) l in 
+  let vflags = List.filter_map (function (Vflag_arg v, a) -> Some (v,a) | _ -> None) l in 
   let opts_args = List.fold_left
-      (fun acc -> function (Opt _, a) ->
+      (fun acc -> function (Opt_arg _, a) ->
           Cmdliner_info.Arg.Set.union (arg_to_args a  ) acc
                          | _ ->acc) Cmdliner_info.Arg.Set.empty l in 
   let vflag_opt_args =  Cmdliner_info.Arg.Set.union opts_args  
-  (list_to_args flag vflags  ) in 
+      (list_to_args flag vflags  ) in 
   vflag_opt_args, convert  
 
 (* Positional arguments *)
