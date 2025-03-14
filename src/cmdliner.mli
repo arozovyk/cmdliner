@@ -837,9 +837,6 @@ module Arg : sig
       This type will become abstract in the next major version of cmdliner. *)
   [@@@alert "+deprecated"] (* Need to be able to mention them ! *)
 
-type  ('a,'b) opt_or_vflag_arg = Vflag_arg of 'a | Opt_arg of 'b
-type  ('a,'b) opt_or_vflag = Vflag_res of 'a | Opt_res of 'b  
-
   val conv :
     ?docv:string -> (string -> ('a, [`Msg of string]) result) * 'a printer ->
     'a conv
@@ -996,12 +993,9 @@ type  ('a,'b) opt_or_vflag = Vflag_res of 'a | Opt_res of 'b
       appear more than once. The argument holds a list that contains one value
       per occurrence of the flag in the order found on the command line.
       It holds the list [v] if the flag is absent from the command line. *)
-
-  val opt_vflag_all : ?vopt:'b -> ('a, 'b) opt_or_vflag list -> 'b list ->
-    (('a, 'b conv) opt_or_vflag_arg * info) list -> ('a, 'b) opt_or_vflag list t
-  val opt_vflag_all2 :?vopt:'a ->
-  'a list ->
-  'a list -> ('a * (('a -> 'a) * 'a conv) option * info) list -> 'a list t
+ 
+  val opt_vflag_all :?vopt:'b ->'a list -> 'b list ->
+     (('a * (('b -> 'a) * 'b conv) option * info) list) -> 'a list t
 
   (** {1:posargs Positional arguments}
 

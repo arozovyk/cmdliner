@@ -9,8 +9,7 @@ type 'a parser = string -> [ `Ok of 'a | `Error of string ]
 type 'a printer = Format.formatter -> 'a -> unit
 type 'a conv = 'a parser * 'a printer
 type 'a converter = 'a conv
-type  ('a,'b) opt_or_vflag_arg = Vflag_arg of 'a | Opt_arg of 'b
-type  ('a,'b) opt_or_vflag = Vflag_res of 'a | Opt_res of 'b 
+ 
 
 val conv :
   ?docv:string -> (string -> ('a, [`Msg of string]) result) * 'a printer ->
@@ -47,10 +46,8 @@ val flag : info -> bool t
 val flag_all : info -> bool list t
 val vflag : 'a -> ('a * info) list -> 'a t
 val vflag_all : 'a list -> ('a * info) list -> 'a list t
-val opt_vflag_all : ?vopt:'b -> ('a, 'b) opt_or_vflag list -> 'b list ->
-  (('a, 'b converter) opt_or_vflag_arg * info) list -> ('a, 'b) opt_or_vflag list t
-
-val opt_vflag_all2 :?vopt:'b ->
+ 
+val opt_vflag_all :?vopt:'b ->
   'a list ->
   'b list -> (('a * (('b -> 'a) * 'b conv) option * info) list) -> 'a list t
 val opt : ?vopt:'a -> 'a converter -> 'a -> info -> 'a t
