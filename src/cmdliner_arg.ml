@@ -241,38 +241,45 @@ let opt_vflag_all ?(vopt) v_vflag v_opt l =
   let convert ei cl =
     let rec aux (acc_result )  = function
     | (fv, None, a) :: rest ->
-        Result.fold acc_result ~ok:(fun (acc  ) ->
+        Result.fold (acc_result:((int * 'a) list, [> `Parse of string ]) result) ~ok:(fun (acc  ) ->
             begin match Cmdliner_cline.opt_arg cl a with
             | [] -> aux (Ok acc) rest
             | l ->
-                let fval (_, f, v) = match v with
-                | None ->  (fv)
+                let fval (k, f, v) = match v with
+                | None ->  (k,fv)
                 | Some v -> failwith (Cmdliner_msg.err_flag_value f v)
                 in
                 (aux (Ok (List.rev_append (List.rev_map fval l) acc) )rest)
             end
           ) ~error:(fun e -> aux acc_result rest) 
     | (_, Some ((v_conv:'b->'a), (parse, print)), a_init) :: rest ->
-        let a_opt= set_opt_info a_init print in 
-        let opt_result = match Cmdliner_cline.opt_arg cl a_opt with
-        | [] -> (try_env ei a_opt (parse_to_list parse) ~absent:v_opt)|> 
-                Result.map (fun b -> List.map (fun b'->  
-                    ( v_conv b')) b)  
-        | l -> let parse (_,f, v) = match v with
-          | Some v ->   
-              let (parsed_opt_v:'b) = ( parse_opt_value parse f v) in 
-              v_conv parsed_opt_v
-          | None -> match vopt with
-          | None -> failwith (Cmdliner_msg.err_opt_value_missing f)
-          | Some dv ->v_conv  dv
-            in
-            try Ok (List.rev  
-                      (List.sort rev_compare (List.rev_map parse l))) with
-            | Failure e -> err e in
-        aux opt_result rest  
+        Result.fold acc_result ~ok:(fun (acc  ) ->
+            let a_opt= set_opt_info a_init print in 
+            let opt_result = match Cmdliner_cline.opt_arg cl a_opt with
+            | [] -> (try_env ei a_opt (parse_to_list parse) ~absent:v_opt)|> 
+                    Result.map (fun b -> 
+                        let env_opt_list= List.map (fun b'-> ( 0,v_conv b')) b in 
+                        List.rev_append env_opt_list acc )  
+            | l -> let parse (k,f, v) :int *'a = match v with
+              | Some v ->   
+                  let (parsed_opt_v:'b) = ( parse_opt_value parse f v) in 
+                  (k,v_conv parsed_opt_v)
+              | None -> match vopt with
+              | None -> failwith (Cmdliner_msg.err_opt_value_missing f)
+              | Some dv ->(k,v_conv dv)
+                in
+                let opt_list = 
+                  (List.rev (List.sort rev_compare (List.rev_map parse l)))  
+                in 
+                let opt_list =  List.rev_append opt_list acc in 
+                try Ok opt_list with
+                | Failure e -> err e in
+            aux opt_result rest)
+          ~error:(fun e -> aux acc_result rest)   
     | [] ->       
         Result.map (fun acc ->
-            if acc = [] then v_vflag else List.rev  (List.sort rev_compare acc)) acc_result
+            if acc = [] then v_vflag else 
+            List.rev_map snd (List.sort rev_compare acc)) acc_result
     in
     ( try (aux (Ok[]) l) with Failure e -> err e)
   in
