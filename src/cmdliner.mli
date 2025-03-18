@@ -993,9 +993,11 @@ module Arg : sig
       appear more than once. The argument holds a list that contains one value
       per occurrence of the flag in the order found on the command line.
       It holds the list [v] if the flag is absent from the command line. *)
- 
-  val opt_vflag_all :?vopt:'b ->'a list -> 'b list ->
-     (('a * (('b -> 'a) * 'b conv) option * info) list) -> 'a list t
+
+
+  type 'a econv = { conv : 'b. 'b conv * ('b -> 'a) }
+  val opt_vflag_all : ('a * 'b option) list ->
+  ('a * ('b option * 'a econv) option * info) list -> ('a * 'b option) list t
 
   (** {1:posargs Positional arguments}
 
