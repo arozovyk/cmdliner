@@ -248,9 +248,9 @@ let opt_all ?vopt (parse, print) v a =
   
   let handle_conv (type b) ((parse, print) : b conv) (bound_v_conv : b -> 'a) a_init vopt cl
     =
-    let a_opt = set_opt_info a_init print ( vopt) in
+    let a_opt = set_opt_info a_init print (vopt) in
     match Cmdliner_cline.opt_arg cl a_opt with
-    | [] -> Obj.magic ()
+    | [] ->  a_opt, []  (* FIXME: try_env ei a (parse_to_list parse) ~absent:v *)
     | l ->
       let parse (k, f, v) =
         match v with
