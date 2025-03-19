@@ -837,6 +837,9 @@ module Arg : sig
       This type will become abstract in the next major version of cmdliner. *)
   [@@@alert "+deprecated"] (* Need to be able to mention them ! *)
 
+  type 'a econv = Conv : ('b conv * 'b option * ('b -> 'a)) -> 'a econv
+  type 'a opt_or_vflag_arg = Opt of 'a econv | VFlag of 'a
+
   val conv :
     ?docv:string -> (string -> ('a, [`Msg of string]) result) * 'a printer ->
     'a conv
@@ -994,10 +997,7 @@ module Arg : sig
       per occurrence of the flag in the order found on the command line.
       It holds the list [v] if the flag is absent from the command line. *)
 
-
-  type 'a econv = { conv : 'b. 'b conv * ('b -> 'a) }
-  val opt_vflag_all : ('a * 'b option) list ->
-  ('a * ('b option * 'a econv) option * info) list -> ('a * 'b option) list t
+  val opt_vflag_all : 'a list -> ('a opt_or_vflag_arg * info) list -> 'a list t
 
   (** {1:posargs Positional arguments}
 
