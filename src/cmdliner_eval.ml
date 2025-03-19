@@ -189,11 +189,6 @@ let eval_value
       | None -> Error (`Error (true, msg))
       end
   | Ok () ->
-    let () =
-  let filename = "output.txt" in
-  let oc = open_out filename in (* Open the file for writing *)
-  output_string oc (Format.asprintf "We create set %a!\n" Cmdliner_info.Arg.pp_arg_set term_args) ; (* Write to the file *)
-  close_out oc (* Close the file *)  in 
       match Cmdliner_cline.create term_args args with
       | Error (e, cl) ->
           begin match try_eval_stdopts ~catch ei cl help version with
