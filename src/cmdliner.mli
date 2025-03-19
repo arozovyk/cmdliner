@@ -838,6 +838,7 @@ module Arg : sig
   [@@@alert "+deprecated"] (* Need to be able to mention them ! *)
 
   type 'a econv = Conv : ('b conv * 'b option * ('b -> 'a)) -> 'a econv
+  type 'a opt_or_vflag_arg = Opt of 'a econv | VFlag of 'a
 
   val conv :
     ?docv:string -> (string -> ('a, [`Msg of string]) result) * 'a printer ->
@@ -997,7 +998,8 @@ module Arg : sig
       It holds the list [v] if the flag is absent from the command line. *)
 
 
-  val opt_vflag_all : 'a list -> ('a * 'a econv option * info) list -> 'a list t
+  val opt_vflag_all : 'a list -> ('a opt_or_vflag_arg * info) list -> 'a list t
+
 
 
   (** {1:posargs Positional arguments}

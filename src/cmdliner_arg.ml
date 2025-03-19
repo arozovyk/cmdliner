@@ -27,6 +27,7 @@ type 'a printer = Format.formatter -> 'a -> unit
 type 'a conv = 'a parser * 'a printer
 type 'a converter = 'a conv
 type 'a econv = Conv : ('b conv * 'b option * ('b -> 'a)) -> 'a econv
+type 'a opt_or_vflag_arg = Opt of 'a econv | VFlag of 'a
 
 
 let default_docv = "VALUE"
@@ -267,7 +268,7 @@ let opt_all ?vopt (parse, print) v a =
       a_opt, List.rev (List.sort rev_compare (List.rev_map parse l))
   ;;
   
-  let opt_vflag_all (v : 'a list) (l : ('a * 'a econv option * info) list) : 'a list t =
+  let opt_vflag_all (v : 'a list) (l : ('a opt_or_vflag_arg * info) list) : 'a list t =
     let flag (_, a) =
       if Cmdliner_info.Arg.is_pos a
       then invalid_arg err_not_opt
@@ -275,7 +276,7 @@ let opt_all ?vopt (parse, print) v a =
     in
     let convert ei cl =
       let rec aux acc_result = function
-        | (fv, None, a) :: rest ->
+        | (VFlag fv, a) :: rest ->
           Result.fold
             acc_result
             ~ok:(fun acc ->
@@ -289,7 +290,7 @@ let opt_all ?vopt (parse, print) v a =
                 in
                 aux (Ok (List.rev_append (List.rev_map fval l) acc)) rest)
             ~error:(fun _ -> aux acc_result rest)
-        | (_, Some (Conv (conv, vopt, v_conv)), info_init) :: rest ->
+        | (  Opt (Conv (conv, vopt, v_conv)), info_init) :: rest ->
           Result.fold
             acc_result
             ~ok:(fun acc ->
@@ -312,14 +313,14 @@ let opt_all ?vopt (parse, print) v a =
     let vflags =
       List.filter_map
         (function
-          | v, None, a -> Some (v, a)
+          | VFlag v, a -> Some (v, a)
           | _ -> None)
         l
     in
     let opts_args =
       List.fold_left
         (fun acc -> function
-          | _, Some (Conv ((parse,print), vopt, v_conv)), info_init ->
+          | Opt (Conv ((parse,print), vopt, v_conv)), info_init ->
              let a_opt = set_opt_info info_init print vopt in
             Cmdliner_info.Arg.Set.union (arg_to_args a_opt) acc
           | _ -> acc)
