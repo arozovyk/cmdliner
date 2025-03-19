@@ -92,16 +92,8 @@ module Arg : sig
   val pos_cli_order : t -> t -> int
   val rev_pos_cli_order : t -> t -> int
 
-  val pp_arg_info : Format.formatter -> t -> unit
-
-
-  val pp_opt_kind : Format.formatter -> opt_kind -> unit
-
   val compare : t -> t -> int
   module Set : Set.S with type elt = t
-
-  val pp_arg_set : Format.formatter -> Set.t -> unit
-
 end
 
 (** Commands. *)
