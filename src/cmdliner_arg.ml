@@ -26,6 +26,8 @@ type 'a printer = Format.formatter -> 'a -> unit
 
 type 'a conv = 'a parser * 'a printer
 type 'a converter = 'a conv
+type 'a econv = Conv : ('b conv * 'b option * ('b -> 'a)) -> 'a econv
+
 
 let default_docv = "VALUE"
 let conv ?docv (parse, print) =
@@ -224,7 +226,7 @@ let opt_all ?vopt (parse, print) v a =
       | Failure e -> err e
   in
   arg_to_args a, convert
-  type 'a econv = Conv : ('b conv * 'b option * ('b -> 'a)) -> 'a econv
+
 
   let set_opt_info a_init print vopt =
     if Cmdliner_info.Arg.is_pos a_init
