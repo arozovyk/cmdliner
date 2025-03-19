@@ -18,3 +18,5 @@ val actual_args : t -> Cmdliner_info.Arg.t -> string list
 
 val is_opt : string -> bool
 val deprecated_msgs : t -> string list
+val pp_t : Format.formatter -> t -> unit
+

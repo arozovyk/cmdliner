@@ -122,13 +122,43 @@ module Arg = struct
   let opt_names a = a.opt_names
   let opt_all a = a.opt_all
   let opt_name_sample a =
-    (* First long or short name (in that order) in the list; this
-       allows the client to control which name is shown *)
-    let rec find = function
-    | [] -> List.hd a.opt_names
-    | n :: ns -> if (String.length n) > 2 then n else find ns
-    in
-    find a.opt_names
+    match a.opt_names with
+    | [] -> "(no-name)"  (* Handle empty case safely *)
+    | _ ->
+        let rec find = function
+        | [] -> List.hd a.opt_names (* This line will never be reached now *)
+        | n :: ns -> if String.length n > 2 then n else find ns
+        in
+        find a.opt_names
+
+        let pp_absence fmt = function
+  | Err -> Format.fprintf fmt "Err"
+  | Val lazy_val -> Format.fprintf fmt "Val %s" (Lazy.force lazy_val)
+  | Doc d -> Format.fprintf fmt "Doc %s" d
+
+let pp_pos_kind fmt p =
+  Format.fprintf fmt "{pos_rev=%b; pos_start=%d; pos_len=%s}"
+    p.pos_rev p.pos_start
+    (match p.pos_len with Some len -> string_of_int len | None -> "None")
+
+let pp_opt_kind fmt = function
+  | Flag -> Format.fprintf fmt "Flag"
+  | Opt -> Format.fprintf fmt "Opt"
+  | Opt_vopt s -> Format.fprintf fmt "Opt_vopt %s" s
+
+let pp_arg_info fmt a =
+  Format.fprintf fmt "{id=%d; deprecated=%s; absent=%a; env=%s; doc=%s; docv=%s; docs=%s; pos=%a; opt_kind=%a; opt_names=[%s]; opt_all=%b}"
+    a.id
+    (match a.deprecated with Some s -> s | None -> "None")
+    pp_absence a.absent
+    (match a.env with Some e -> e.Env.var | None -> "None")
+    a.doc a.docv a.docs
+    pp_pos_kind a.pos
+    pp_opt_kind a.opt_kind
+    (String.concat ", " a.opt_names)
+    a.opt_all
+
+
 
   let make_req a = { a with absent = Err }
   let make_all_opts a = { a with opt_all = true }
@@ -154,6 +184,12 @@ module Arg = struct
 
   let compare a0 a1 = Int.compare a0.id a1.id
   module Set = Set.Make (struct type nonrec t = t let compare = compare end)
+
+  let pp_arg_set fmt set =
+    let pp_sep fmt () = Format.fprintf fmt ", " in
+    Format.fprintf fmt "{%a}"
+      (Format.pp_print_list ~pp_sep pp_arg_info)
+      ( Set.elements set)
 end
 
 (* Commands *)

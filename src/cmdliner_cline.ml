@@ -23,6 +23,32 @@ type arg =      (* unconverted argument data as found on the command line. *)
 
 type t = arg Amap.t  (* command line, maps arg_infos to arg value. *)
 
+let pp_arg fmt = function
+  | O opts when opts = [] -> Format.fprintf fmt "O [] (empty)\n"
+  | O opts ->
+      let pp_opt fmt (pos, name, value) =
+        match value with
+        | Some v -> Format.fprintf fmt "(%d, %s, Some %s)" pos name v
+        | None -> Format.fprintf fmt "(%d, %s, None)" pos name
+      in
+      Format.fprintf fmt "O [%a]\n" (Format.pp_print_list pp_opt) opts
+  | P pos_list when pos_list = [] -> Format.fprintf fmt "P [] (empty)\n"
+  | P pos_list ->
+      Format.fprintf fmt "P [%a]\n" (Format.pp_print_list Format.pp_print_string) pos_list
+      let pp_entry fmt (arg, value) =
+        Format.fprintf fmt "%a -> %a"Cmdliner_info.Arg.pp_arg_info arg pp_arg value
+      
+      let pp_t fmt amap =
+        let bindings = Amap.bindings amap in
+        if bindings = [] then Format.fprintf fmt "{} (empty amap)\n"
+        else
+          Format.fprintf fmt "{%a}"
+            (Format.pp_print_list pp_entry)
+            bindings
+
+
+            
+
 let get_arg cl a = try Amap.find a cl with Not_found -> assert false
 let opt_arg cl a = match get_arg cl a with O l -> l | _ -> assert false
 let pos_arg cl a = match get_arg cl a with P l -> l | _ -> assert false
