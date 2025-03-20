@@ -997,10 +997,7 @@ module Arg : sig
       per occurrence of the flag in the order found on the command line.
       It holds the list [v] if the flag is absent from the command line. *)
 
-
   val opt_vflag_all : 'a list -> ('a opt_or_vflag_arg * info) list -> 'a list t
-
-
 
   (** {1:posargs Positional arguments}
 

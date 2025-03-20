@@ -245,61 +245,70 @@ let set_opt_info a_init print vopt =
     in
     Cmdliner_info.Arg.make_opt_all ~absent ~kind a_init)
 ;;
-
-let handle_conv (type b) ((parse, print) : b conv) (bound_v_conv : b -> 'a) a_init (vopt:b option) cl
-  =
-  let a_opt = set_opt_info a_init print (vopt) in
-  match Cmdliner_cline.opt_arg cl a_opt with
-  | [] ->  a_opt, []  (* FIXME: try_env ei a (parse_to_list parse) ~absent:v *)
-  | l ->
+let handle_conv econv a_init cl ei v =
+  let aux (type b) ((parse, print) : b conv) (bound_v_conv : b -> 'a) (vopt : b option) =
+    let a_opt = set_opt_info a_init print vopt in
+    match Cmdliner_cline.opt_arg cl a_opt with
+    | [] ->
+      try_env
+        ei
+        a_opt
+        (fun v ->
+          match parse v with
+          | `Ok b -> `Ok [ 0, bound_v_conv b ]
+          | `Error e -> `Error e)
+        ~absent:(List.mapi (fun i a -> i, a) v)
+    | l ->
       let parse (k, f, v) =
         match v with
         | Some v ->
-            let b = parse_opt_value parse f v in
-            let a = bound_v_conv b in
-            k, a
+          let b = parse_opt_value parse f v in
+          let a = bound_v_conv b in
+          k, a
         | None ->
-            (match vopt with
-            | None -> failwith (Cmdliner_msg.err_opt_value_missing f)
-            | Some b ->
-                let a = bound_v_conv b in
-                k, a)
+          (match vopt with
+           | None -> failwith (Cmdliner_msg.err_opt_value_missing f)
+           | Some b ->
+             let a = bound_v_conv b in
+             k, a)
       in
-      a_opt, List.rev (List.sort rev_compare (List.rev_map parse l))
+      Ok (List.rev (List.sort rev_compare (List.rev_map parse l)))
+  in
+  match econv with
+  | Conv (b_conv, vopt, v_conv) -> aux b_conv v_conv vopt
 ;;
 
 let opt_vflag_all (v : 'a list) (l : ('a opt_or_vflag_arg * info) list) : 'a list t =
   let convert ei cl =
     let rec aux acc_result = function
-    | (VFlag fv, a) :: rest ->
+      | (VFlag fv, a) :: rest ->
         Result.fold
           acc_result
           ~ok:(fun acc ->
-              match Cmdliner_cline.opt_arg cl a with
-              | [] -> aux (Ok acc) rest
-              | l ->
-                  let fval (k, f, v) =
-                    match v with
-                    | None -> k, fv
-                    | Some v -> failwith (Cmdliner_msg.err_flag_value f v)
-                  in
-                  aux (Ok (List.rev_append (List.rev_map fval l) acc)) rest)
-          ~error:(fun _ -> aux acc_result rest)
-    | (  Opt (Conv (conv, vopt, v_conv)), info_init) :: rest ->
-        Result.fold
-          acc_result
-          ~ok:(fun acc ->
-              let  opt_result =
-                let _, opt_list = handle_conv conv v_conv info_init vopt cl in
-                let opt_list = List.rev_append opt_list acc in
-                Ok opt_list
+            match Cmdliner_cline.opt_arg cl a with
+            | [] -> aux (Ok acc) rest
+            | l ->
+              let fval (k, f, v) =
+                match v with
+                | None -> k, fv
+                | Some v -> failwith (Cmdliner_msg.err_flag_value f v)
               in
-              aux opt_result rest)
+              aux (Ok (List.rev_append (List.rev_map fval l) acc)) rest)
+          ~error:(fun _ -> aux acc_result rest)
+      | (Opt econv, info_init) :: rest ->
+        Result.fold
+          acc_result
+          ~ok:(fun acc ->
+            let opt_result =
+              let opt_list = handle_conv econv info_init cl ei v in
+              Result.map (fun opt_list -> List.rev_append opt_list acc) opt_list
+            in
+            aux opt_result rest)
           ~error:(fun e -> aux acc_result rest)
-    | [] ->
+      | [] ->
         Result.map
           (fun acc ->
-             if acc = [] then v else List.rev_map snd (List.sort rev_compare acc))
+            if acc = [] then v else List.rev_map snd (List.sort rev_compare acc))
           acc_result
     in
     try aux (Ok []) l with
@@ -308,13 +317,16 @@ let opt_vflag_all (v : 'a list) (l : ('a opt_or_vflag_arg * info) list) : 'a lis
   let vflag_opt_args =
     List.fold_left
       (fun acc -> function
-       | Opt (Conv ((parse,print), vopt, v_conv)), info_init ->
-           let a_opt = set_opt_info info_init print vopt in
-           Cmdliner_info.Arg.Set.union (arg_to_args a_opt) acc
-       | VFlag _,info -> let arg = if Cmdliner_info.Arg.is_pos info
-                           then invalid_arg err_not_opt
-                           else Cmdliner_info.Arg.make_all_opts info in 
-           Cmdliner_info.Arg.Set.add arg acc )
+        | Opt (Conv ((parse, print), vopt, v_conv)), info_init ->
+          let a_opt = set_opt_info info_init print vopt in
+          Cmdliner_info.Arg.Set.union (arg_to_args a_opt) acc
+        | VFlag _, info ->
+          let arg =
+            if Cmdliner_info.Arg.is_pos info
+            then invalid_arg err_not_opt
+            else Cmdliner_info.Arg.make_all_opts info
+          in
+          Cmdliner_info.Arg.Set.add arg acc)
       Cmdliner_info.Arg.Set.empty
       l
   in
