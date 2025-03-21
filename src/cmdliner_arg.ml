@@ -282,7 +282,7 @@ let opt_vflag_all v l =
                     | Some v -> failwith (Cmdliner_msg.err_flag_value f v) 
                   in
                   aux (Ok (List.rev_append (List.rev_map fval l) acc)) rest)
-          ~error:(fun _ -> aux acc_result rest)
+          ~error:(fun e -> aux (Error e) rest)
     | (Opt econv, info_init) :: rest ->
         Result.fold acc_result
           ~ok:(fun acc ->
@@ -291,7 +291,7 @@ let opt_vflag_all v l =
                 Result.map (fun opt_list -> List.rev_append opt_list acc) opt_list
               in
               aux opt_result rest)
-          ~error:(fun e -> aux acc_result rest)
+          ~error:(fun e -> aux (Error e) rest)
     | [] ->
         Result.map
           (fun acc ->
