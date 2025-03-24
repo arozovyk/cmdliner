@@ -9,7 +9,7 @@ type 'a parser = string -> [ `Ok of 'a | `Error of string ]
 type 'a printer = Format.formatter -> 'a -> unit
 type 'a conv = 'a parser * 'a printer
 type 'a converter = 'a conv
-type 'a econv = Conv : ('b conv * 'b option * ('b -> 'a)) -> 'a econv
+type 'a econv = Conv : { conv:'b conv; vopt:'b option ; vconv:('b -> 'a)} -> 'a econv
 type 'a opt_or_vflag_arg = Opt of 'a econv | VFlag of 'a
 
 val conv :

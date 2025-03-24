@@ -837,7 +837,8 @@ module Arg : sig
       This type will become abstract in the next major version of cmdliner. *)
   [@@@alert "+deprecated"] (* Need to be able to mention them ! *)
 
-  type 'a econv = Conv : ('b conv * 'b option * ('b -> 'a)) -> 'a econv
+  type 'a econv = Conv : { conv:'b conv; vopt:'b option ; vconv:('b -> 'a)} -> 'a econv
+  
   type 'a opt_or_vflag_arg = Opt of 'a econv | VFlag of 'a
 
   val conv :
